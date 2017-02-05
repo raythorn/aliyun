@@ -60,7 +60,14 @@ func (sms *Alisms) SendSMS(key, secret string) error {
 	paramstr := param.Encode()
 	signature := sms.signature(paramstr)
 
-	body := ioutil.NopCloser(strings.NewReader("Signature=" + signature + "&" + paramstr))
+	params, err := url.QueryUnescape(paramstr)
+	if err != nil {
+		return err
+	}
+
+	log.Println(params)
+
+	body := ioutil.NopCloser(strings.NewReader("Signature=" + signature + "&" + params))
 	log.Println(body)
 
 	client := &http.Client{}
@@ -111,8 +118,6 @@ func (sms *Alisms) Random(size, kind int) string {
 func (sms *Alisms) signature(param string) string {
 
 	param = "POST&%2F&" + url.QueryEscape(param)
-
-	log.Println(param)
 
 	secret := sms.accessKeySecret + "&"
 	mac := hmac.New(sha1.New, []byte(secret))
