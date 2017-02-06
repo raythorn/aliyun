@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -90,7 +91,16 @@ func (sms *Alisms) SendSMS(key, secret string) error {
 		return err
 	}
 
-	log.Println(string(data))
+	var resp map[string]string
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return err
+	}
+
+	log.Println(resp)
+	if msg, exist := resp["Message"]; exist {
+		return errors.New(msg)
+	}
 
 	return nil
 }
@@ -135,12 +145,12 @@ func (sms *Alisms) parameter() *url.Values {
 	param.Add("SignName", sms.SignName)
 	param.Add("TemplateCode", sms.TemplateCode)
 	param.Add("RecNum", sms.Phone)
-	param.Add("SignString", sms.Params)
+	param.Add("ParamString", sms.Params)
 	param.Add("Format", sms.Format)
 	param.Add("Version", AliSMSVersion)
 	param.Add("AccessKeyId", sms.accessKey)
 	param.Add("SignatureMethod", AliSMSSignMethod)
-	param.Add("Timestamp", time.Now().Format("2006-01-02T15:04:05Z"))
+	param.Add("Timestamp", time.Now().UTC().Format("2006-01-02T15:04:05Z"))
 	param.Add("SignatureVersion", AliSMSSignVersion)
 	param.Add("SignatureNonce", sms.nonce())
 
